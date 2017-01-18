@@ -10,6 +10,7 @@ import seaborn as sns
 from scipy.optimize import leastsq
 import Tkinter as tk
 import tkFileDialog 
+import ast
 
 
 class Get_initials(tk.Tk):
@@ -42,7 +43,136 @@ def weibull(x,threshx,slope,guess,flake,threshy=None):
         
     k = (-np.log( (1-threshy)/(1-guess) ))**(1/slope)
     weib = flake - (flake-guess)*np.exp(-(k*x/threshx)**slope)
+    
     return weib 
+    
+def do_kdtree(x_y_array, points):
+    mytree = spatial.cKDTree(x_y_array)
+    dist, indexes = mytree.query(points)
+    return indexes
+    
+def correct_gaze():
+    """based on the fixation points used in the subject controlled calibration, we find
+    the displacement from fixation to where the eyetracker thought their eye was
+    and then we'll use to adjust all of the other gaze data """
+    new_fix = ([0, 0], [0, 566], [0, -566], [425, 0], [-425, 0], [425, 566], [-425, -566], [-425, 566], 
+           [425, -566], [0, 283], [0, -283], [212, 0], [-213, 0], [212, 283], [-213, -283], [-213, 283], 
+           [212, -283], [0, 188], [0, -189], [141, 0], [-142, 0], [141, 188], [-142, -189], [-142, 188], 
+           [141, -189], [0, 141], [0, -142], [106, 0], [-107, 0], [106, 141], [-107, -142], [-107, 141], 
+           [106, -142])
+           
+    df_calib = pd.read_csv(sub_folder+'/calib/'+ current_subject + '_calibration_coords.csv', delimiter='\t')
+
+    fix = df_calib.fix
+    df_displacement = pd.DataFrame([], columns=['fix_x','fix_y', 'x_dis', 'y_dis'])
+
+    gaze_at_fix = []
+    xFixation = []
+    yFixation = []
+
+    for i in range(len(df_calib)):
+        gaze = df_calib.last_gaze[i]
+        gaze = ast.literal_eval(gaze)
+
+        gaze_x = gaze[0]
+        gaze_y = gaze[1]
+        
+        fx = new_fix[i]
+
+        fix_y = (1)*int(fx[0]) + (880/2)
+        fix_x = (-1)*int(fx[1]) + (1150/2)
+        xFixation.append(fix_x)
+        yFixation.append(fix_y)
+
+        gaze_at_fix.append(gaze)
+        
+    #################################   
+    x_err_up = []
+    y_err_up = []
+    x_err_low = []
+    y_err_low = []
+    for i in range(len(gaze_at_fix)):
+        fix_x = xFixation[i]
+        fix_y = yFixation[i]
+    
+        x = gaze_at_fix[i][0]
+        y = gaze_at_fix[i][1]
+    
+        x_dis = fix_x - x
+        y_dis = fix_y - y
+     
+        if x_dis > 0:
+            x_err_up.append(x_dis)
+            x_err_low.append(0)
+        else:
+            x_err_up.append(0)
+            x_err_low.append(x_dis)
+        if y_dis > 0:
+            y_err_up.append(y_dis)
+            y_err_low.append(0)
+        else:
+            y_err_up.append(0)
+            y_err_low.append(y_dis)
+      
+        new_row = pd.DataFrame({'fix_x':[fix_x], 'fix_y':[fix_y], 'x_dis':[x_dis], 'y_dis':[y_dis]}, index=[0])
+        df_displacement = pd.concat([df_displacement, new_row], ignore_index=True)
+    
+    
+    x_err = [x_err_low, x_err_up]
+    y_err = [y_err_low, y_err_up]
+    #ax.errorbar(df_displacement.fix_x, df_displacement.fix_y,yerr=df_displacement.y_dis, xerr=df_displacement.x_dis, fmt='o')
+    gaze_x = [int(g[0]) + df_displacement['x_dis'].mean() for g in gaze_at_fix]
+    gaze_y = [int(g[1]) + df_displacement['y_dis'].mean()for g in gaze_at_fix]
+    y_avg = df_displacement["y_dis"].mean()
+    x_avg = df_displacement["x_dis"].mean()
+    
+    return x_avg, y_avg
+
+    
+def plot_eyetrack(dir_name, subject, date, all_runs):
+    # load up some figures
+    fig_all, ax_all = plt.subplots()
+    subject_data = pd.ExcelFile(all_runs)
+
+    labels = []
+    num_runs = len(subject_data.sheet_names)
+    colormap = plt.cm.gist_ncar
+    plt.gca().set_color_cycle([colormap(i) for i in np.linspace(0, 0.9, num_runs)])
+    for sheet in subject_data.sheet_names:
+        df_data = subject_data.parse(sheet)
+        df_data = df_data[df_data.Blink == 0]
+    ### !!! Change this back
+        df_stim_on = df_data
+        df_stim_on = df_stim_on[df_stim_on.Stimuli_On == 0]
+        df_stim_on = df_stim_on[df_stim_on.Out_bounds_Stim_On == 0]
+
+        x_avg, y_avg = correct_gaze() # get average displacements
+        #print(x_avg, y_avg)
+        #ax_all.
+        try_x = df_stim_on.x + x_avg
+        try_y = df_stim_on.y + y_avg/2
+        #ax_all.
+        #plt.plot(df_stim_on.x, df_stim_on.y, '.', alpha=0.2, label=sheet)
+        plt.plot(try_x, try_y, '.', alpha=0.2, label=sheet)
+
+        labels.append(sheet)
+
+    #ax_all
+#     plt.xlim([0, 1150])
+#     plt.ylim([0, 800])
+    plt.ylim([0, 870])
+    plt.xlim([0, 1150])
+    plt.plot((1150/2), (869/2), c='yellow', marker='*', markersize=25)
+    annulus_Outer = plt.Circle(((1150/2), (869/2)), 79.25*2, color = 'r', fill=False)
+    annulus_Inner = plt.Circle(((1150/2), (869/2)), 79.25, color = 'r', fill=False)
+    plt.gca().add_artist(annulus_Outer)
+    plt.gca().add_artist(annulus_Inner)
+
+    plt.gca().invert_yaxis()
+    plt.title(subject+' Eyetrack')
+    plt.legend(labels, ncol=1, loc='upper left')
+    plt.show()
+
 
 def plot_psychophysical_performance(subject, date, dir_name, num_blocks):
 
@@ -63,16 +193,21 @@ def plot_psychophysical_performance(subject, date, dir_name, num_blocks):
     for fn in os.listdir(dir_name):
         if fn.endswith('psydat')==True:
             file_name = fn
+
             if (int(fn[9:10]) == 1):
-            
+                
                 file_read = file(dir_name + '/'+ file_name, 'r')
                 p={} #To hold parameters
                 l = file_read.readline()
                 condition = file_name[6:10] # based on file name structure SS_Initials_Condition_date.psydat
-                
+                print(condition)
                 df_eye = EyeData.parse(subject+'_'+condition)
+                # remove blink eye movements
+                df_eye = df_eye[df_eye.Blink == 0]
+                
                 df_broken_fix = df_eye.copy()
                 df_broken_fix = df_broken_fix[df_broken_fix.In_Bound == 0] ### LIZ: double check this
+                
                 invalid_trials = df_broken_fix['trial'].tolist()
                 
                 if condition[:3] == 'NSV':
@@ -134,8 +269,7 @@ def plot_psychophysical_performance(subject, date, dir_name, num_blocks):
                 
                 # remove broken fixation trials here
             
-                rm_annulus_target_contrast = np.copy(annulus_target_contrast) # first copy the list so we don't lose the original data
-                rm_annulus_target_contrast = np.asarray([i for j, i in enumerate(rm_annulus_target_contrast) if j not in invalid_trials])
+                
                 rm_contrast = np.copy(contrast)
                 rm_contrast = np.asarray([i for j, i in enumerate(rm_contrast) if j not in invalid_trials])
                 rm_correct = np.copy(correct)
@@ -152,20 +286,24 @@ def plot_psychophysical_performance(subject, date, dir_name, num_blocks):
                         
                         to_upload = fn[:9] + str(i) + fn[10:]
                         data_hold = csv2rec(dir_name + '/'+ to_upload)
+                        print(to_upload)
+                        annulus_target_contrast_hold = data_hold['annulus_target_contrast']-p[' annulus_contrast']
+                        
+                        append_target_cont = data_hold['annulus_target_contrast']
                         append_correct = data_hold['correct']
-                        append_contrast = data_hold['annulus_target_contrast']
-                        correct = np.concatenate((correct, append_correct)
-                        contrast = np.concatenate(contrast, append_cont)
+                        append_contrast = data_hold['annulus_target_contrast']-p[' annulus_contrast']
+                        correct = np.concatenate((np.array(correct), np.array(append_correct)))
+                        contrast = np.concatenate((np.array(contrast), np.array(append_contrast)))
+                        target_cont = np.concatenate((target_cont, append_target_cont))
                         
-                        rm_annulus_target_contrast_hold = np.copy(annulus_target_contrast) # first copy the list so we don't lose the original data
-                        rm_annulus_target_contrast_hold = np.asarray([i for j, i in enumerate(rm_annulus_target_contrast) if j not in invalid_trials])
-                        rm_contrast_hold = np.copy(append_contrast)
-                        rm_contrast_hold = np.asarray([i for j, i in enumerate(rm_contrast) if j not in invalid_trials])
-                        rm_contrast = np.concatenate(contrast, rm_contrast_hold)
                         
-                        rm_correct_hold = np.copy(append_correct)
-                        rm_correct_hold = np.asarray([i for j, i in enumerate(rm_correct) if j not in invalid_trials])
-                        rm_correct = np.concatenate(rm_correct, rm_correct_hold)
+                        rm_contrast_hold_append = np.copy(append_contrast)
+                        rm_contrast_hold_append = np.asarray([i for j, i in enumerate(rm_contrast_hold_append) if j not in invalid_trials])
+                        rm_contrast = np.concatenate((rm_contrast, rm_contrast_hold_append))
+                        
+                        rm_correct_hold_append = np.copy(append_correct)
+                        rm_correct_hold_append = np.asarray([i for j, i in enumerate(rm_correct_hold_append) if j not in invalid_trials])
+                        rm_correct = np.concatenate((rm_correct, rm_correct_hold_append))
                         trials = range(1, len(correct)+ 1)
 
                 labels = []
@@ -174,8 +312,7 @@ def plot_psychophysical_performance(subject, date, dir_name, num_blocks):
                         labels.append('correct')
                     else:
                         labels.append('incorrect')
-                print(len(correct))
-                print(len(trials))
+                print(len(trials), len(correct))
                         
                 # !!! Need to add way to remove broken fixation trials here
 
@@ -205,6 +342,7 @@ def plot_psychophysical_performance(subject, date, dir_name, num_blocks):
                 #Switch on the two annulus tasks (annulus on vs. annulus off):
             #   for idx_annulus,operator in enumerate(['<','>=']):
                 hit_amps = contrast[correct==1]
+                hit_amps = contrast[correct==1]
                 miss_amps = contrast[correct==0]
                 all_amps = np.hstack([hit_amps,miss_amps])
                     #Get the data into this form:
@@ -225,7 +363,8 @@ def plot_psychophysical_performance(subject, date, dir_name, num_blocks):
                 rm_n_trials = [len(np.where(rm_all_amps==i)[0]) for i in stim_intensities]
             
                 Data = zip(stim_intensities,n_correct,n_trials) 
-                # Data in the format: for each stimulus intensity the number of trials the subject got corrent
+                print(Data)
+                # Data in the format: for each stimulus intensity the number of trials the subject got correct
                 # (and how many trials they completed at that intensity) is saved 
                 rm_Data = zip(stim_intensities, rm_n_correct, rm_n_trials)
         
@@ -258,9 +397,13 @@ def plot_psychophysical_performance(subject, date, dir_name, num_blocks):
                     #Contrast values: 
                         rm_x = np.hstack([x,this[2] * [this[0]]])
                             #% correct:
-                        rm_y = np.hstack([y,this[2] * [this[1]/float(this[2])]])
+                        if float(this[2]) == 0:
+                            rm_y = np.hstack([y, this[2]*[this[0]]])
+                        else:
+                            rm_y = np.hstack([y,this[2] * [this[1]/float(this[2])]])
 
                 rm_initial = np.mean(rm_x),slope
+
                 rm_this_fit , rm_msg = leastsq(err_func, x0=rm_initial, args=(rm_x,rm_y))
             
 
@@ -327,7 +470,6 @@ def plot_psychophysical_performance(subject, date, dir_name, num_blocks):
                 df_psy = pd.concat([df_psy, new_row], ignore_index=True)
 
 
-              
                 trial_history = pd.DataFrame(dict(x=trials, y=correct, labels=labels))
                 #fig1 = sns.lmplot("x", "y", hue="labels", data=trial_history, fit_reg=False)
                 ax_r.plot(trial_history.x, trial_history.y, '.')
@@ -385,7 +527,7 @@ if __name__ =="__main__":
     
     current_subject = subject_name.input
     date = sub_folder[-8:]
-    num_blocks = 1
+    num_blocks = 4
     
         # Global-ish Variables
     bootstrap_n = 1000
@@ -396,5 +538,9 @@ if __name__ =="__main__":
     slope = 3.5
     
     plot_psychophysical_performance(current_subject, date, sub_folder, num_blocks)
+    all_runs = sub_folder+'/proccessed/'+current_subject+'_'+date+'_master_file.xlsx'
+    plot_eyetrack('/'+sub_folder+'/proccessed', current_subject, date, all_runs)
+    
+    print('end all!')
    
    
