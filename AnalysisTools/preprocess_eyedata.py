@@ -66,8 +66,10 @@ if __name__ =="__main__":
     
     for fn in os.listdir(sub_folder):
         eye_track = ''
-        if fn.endswith('.csv')==True:
+        if fn.endswith('.csv')==True and fn.endswith('coords.csv') != True:
             print(fn)
+            if fn == '._KB_calibration_coords.csv':
+                print('break')
             # now we check the eyetrack file for marked trials that break fixation
             # we have eyetrack data!
             eye_track = fn[:-4] # so now eye_track is just the file name which will be SubjectInitials_EXpScheme

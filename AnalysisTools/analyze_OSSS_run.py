@@ -144,7 +144,7 @@ def plot_eyetrack(dir_name, subject, date, all_runs):
     ### !!! Change this back
         df_stim_on = df_data
         df_stim_on = df_stim_on[df_stim_on.Stimuli_On == 0]
-        df_stim_on = df_stim_on[df_stim_on.Out_bounds_Stim_On == 0]
+        df_stim_on = df_stim_on[df_stim_on.Out_bounds_stim_On == 0]
 
         x_avg, y_avg = correct_gaze() # get average displacements
         #print(x_avg, y_avg)
@@ -171,8 +171,27 @@ def plot_eyetrack(dir_name, subject, date, all_runs):
     plt.gca().invert_yaxis()
     plt.title(subject+' Eyetrack')
     plt.legend(labels, ncol=1, loc='upper left')
-    plt.show()
+    plt.savefig(dir_name + '/proccessed/' + subject+'_'+date +'_eye.png')
 
+
+def eye_track_stats(dir_name, subject, date, all_runs):
+    subject_data = pd.ExcelFile(all_runs)
+    eye_output = open(dir_name +'/' + subject+'_'+date+'_eye.txt', 'w')
+
+    labels = []
+    num_runs = len(subject_data.sheet_names)
+
+    for sheet in subject_data.sheet_names:
+        print(sheet)
+        df_data = subject_data.parse(sheet)
+        df_fix_break = df_data
+        df_fix_break = df_fix_break[df_fix_break.In_Bound == 1]
+        
+        
+        
+        break_time = sum(df_fix_break.time)/sum(df_data.time)
+       
+        eye_output.write(sheet + ' percent time fixating: %s \n'%(break_time))
 
 def plot_psychophysical_performance(subject, date, dir_name, num_blocks):
 
@@ -192,9 +211,10 @@ def plot_psychophysical_performance(subject, date, dir_name, num_blocks):
 
     for fn in os.listdir(dir_name):
         if fn.endswith('psydat')==True:
+            print(fn)
             file_name = fn
 
-            if (int(fn[9:10]) == 1):
+            if ((fn[9:10]) == '1'):
                 
                 file_read = file(dir_name + '/'+ file_name, 'r')
                 p={} #To hold parameters
@@ -539,7 +559,8 @@ if __name__ =="__main__":
     
     plot_psychophysical_performance(current_subject, date, sub_folder, num_blocks)
     all_runs = sub_folder+'/proccessed/'+current_subject+'_'+date+'_master_file.xlsx'
-    plot_eyetrack('/'+sub_folder+'/proccessed', current_subject, date, all_runs)
+    eye_track_stats(sub_folder+'/proccessed', current_subject, date, all_runs)
+    #plot_eyetrack('/'+sub_folder+'/proccessed', current_subject, date, all_runs)
     
     print('end all!')
    
