@@ -1,9 +1,35 @@
 import time
 import os
-
+from psychopy import visual, core, event
+import ss_classes
 import wx
 import numpy as np
 from matplotlib.mlab import window_hanning,csv2rec
+from ss_classes import * 
+
+def run_calibration(win):
+    """ Before we open the PsychoPy window, run Eyelink Calibration"""
+    ### Calibration
+    #calib.monitorFolder = './calibration/'
+    #mon = calib.Monitor('404_CRT_Saved')
+
+    message = """ Recablibrating - Hit 'SPACE' to continue"""
+    ss_classes.Text(win, text=message, height=0.7, keys=['space'])()
+    win.flip()
+    
+    win_x = 1152
+    win_y = 870
+    
+    #pylink.openGraphics((win.size[0]-1, win.size[1]-1), 32)
+    pylink.openGraphics((win_x, win_y), 32)
+    pylink.setCalibrationColors((0,0,0), (192, 192, 192))
+    #pylink.setTargetSize(int((win.size[0]-1))/70, int((win.size[1]-1))/300)
+    pylink.setTargetSize(int((win_x-1))/70, int((win_y-1))/300)
+    pylink.setCalibrationSounds("", "", "")
+    pylink.setDriftCorrectSounds("", "off", "off")
+    getEYELINK().doTrackerSetup()
+    pylink.closeGraphics()
+
 
 #Sound-generation function:
 def sound_freq_sweep(startFreq, endFreq, duration, samples_per_sec=None):
@@ -57,19 +83,31 @@ class GetFromSimpleGui(wx.Dialog):
     def __init__(self, parent, id, title, combo_choices=['No Choices Given']):
         wx.Dialog.__init__(self, parent, id, title, size=(280, 360))
         # Add text labels
-        wx.StaticText(self, -1, 'Subject ID:', pos=(10,20))
-        wx.StaticText(self, -1, 'Run Number:', pos=(10,65))
-        wx.StaticText(self, -1, 'How many blocks (for each condition):', pos=(10,110))
+        wx.StaticText(self, -1, 'Subject #:', pos=(10,20))
+        wx.StaticText(self, -1, 'Run Number:', pos=(10,55))
+        wx.StaticText(self, -1, 'Parallel       H:', pos=(10,90))
+        wx.StaticText(self, -1, 'V:', pos=(155,90))
+        wx.StaticText(self, -1, 'Orthogonal H:', pos=(10,125))
+        wx.StaticText(self, -1, 'V:', pos=(155,125))
+        wx.StaticText(self, -1, 'None          H:', pos=(10,160))
+        wx.StaticText(self, -1, 'V:', pos=(155,160))
+        wx.StaticText(self, -1, 'How many blocks (for each condition):', pos=(10,200))
         # Add the subj id text box, drop down menu, radio buttons
         self.sub_textbox = wx.TextCtrl(self, -1, pos=(100,18), size=(150, -1))
-        self.run_num_textbox = wx.TextCtrl(self, -1, pos=(100, 63), size=(150, -1))
+        self.run_num_textbox = wx.TextCtrl(self, -1, pos=(100, 53), size=(50, -1))
+        self.parallel_h_textbox = wx.TextCtrl(self, -1, pos=(100, 90), size=(50, -1))
+        self.parallel_v_textbox = wx.TextCtrl(self, -1, pos=(170, 90), size=(50, -1))
+        self.orthogonal_h_textbox = wx.TextCtrl(self, -1, pos=(100, 125), size=(50, -1))
+        self.orthogonal_v_textbox = wx.TextCtrl(self, -1, pos=(170, 125), size=(50, -1))
+        self.no_surr_h_textbox = wx.TextCtrl(self, -1, pos=(100, 160), size=(50, -1))
+        self.no_surr_v_textbox = wx.TextCtrl(self, -1, pos=(170, 160), size=(50, -1))
         self.replay_contrast = None
         
         # Radio Buttons for the number of tasks
-        self.rb_block1 = wx.RadioButton(self, -1, '1', (25, 155), style=wx.RB_GROUP)
-        self.rb_block2 = wx.RadioButton(self, -1, '2', (75, 155))
-        self.rb_block3 = wx.RadioButton(self, -1, '3', (125, 155))
-        self.rb_block4 = wx.RadioButton(self, -1, '4', (175, 155))
+        self.rb_block1 = wx.RadioButton(self, -1, '1', (25, 225), style=wx.RB_GROUP)
+        self.rb_block2 = wx.RadioButton(self, -1, '2', (75, 225))
+        self.rb_block3 = wx.RadioButton(self, -1, '3', (125, 225))
+        self.rb_block4 = wx.RadioButton(self, -1, '4', (175, 225))
         
         self.rb_block1.SetValue(1)
         self.rb_block2.SetValue(1)
@@ -94,7 +132,14 @@ class GetFromSimpleGui(wx.Dialog):
         self.success = True
         self.subject = self.sub_textbox.GetValue()
         self.run_num = self.run_num_textbox.GetValue()
+        self.parallel_h = self.parallel_h_textbox.GetValue()
+        self.parallel_v = self.parallel_v_textbox.GetValue()
+        self.orthogonal_h = self.orthogonal_h_textbox.GetValue()
+        self.orthogonal_v = self.orthogonal_v_textbox.GetValue()
+        self.no_surr_h = self.no_surr_h_textbox.GetValue()
+        self.no_surr_v = self.no_surr_v_textbox.GetValue()
         #If subjet is not set, default to 'test_subject':
+        
         if self.subject == '':
             self.subject == 'test_subject'
         if self.run_num == '':

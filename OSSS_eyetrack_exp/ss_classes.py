@@ -237,7 +237,7 @@ class Staircase(object):
         """
         #If none is the input, don't change anything (not even n!) and record
         #the value in this trial:
-        if correct is not None and check_saccade == 0:
+        if correct is not None: # and check_saccade == 0:
             if correct:
                 if self.n>=self.n_up-1:
                     self.value += self.harder * self.step #'harder' sets the
@@ -548,10 +548,20 @@ class Stimulus(Event):
             #we need to adjust for that, so that the target locations
             #remain invariant across different orientations (hence
             #subtraction of annulus_ori):
-            target_mask[np.where(theta<target_loc*np.deg2rad(90)-
+            if target_ori == 90 and target_loc == 0:
+                target_mask[np.where(theta<np.deg2rad(270))] = -1
+                target_mask[np.where(theta>np.deg2rad(360))] = -1
+                
+            else:
+                target_mask[np.where(theta<target_loc*np.deg2rad(90)-
                                  np.deg2rad(target_ori))] = -1
-            target_mask[np.where(theta>(target_loc+1)*np.deg2rad(90)-
-                                 np.deg2rad(target_ori))] = -1
+                target_mask[np.where(theta>(target_loc+1)*np.deg2rad(90)-
+                                     np.deg2rad(target_ori))] = -1
+
+#            target_mask[np.where(theta<target_loc*np.deg2rad(90)-
+#                                 np.deg2rad(target_ori))] = -1
+#            target_mask[np.where(theta>(target_loc+1)*np.deg2rad(90)-
+#                                 np.deg2rad(target_ori))] = -1
             # 45 is hard-coded for now and depends on the number of
             #targets/wedges we want to have in the annulus (corresponds to the
             #number of spokes as well).

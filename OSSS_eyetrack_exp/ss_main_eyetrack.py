@@ -38,11 +38,27 @@ user_choice = GetFromSimpleGui(None, -1, 'Session Params',
 # success is achieved if the user presses 'done':         
 user_params = {
     "subject" : user_choice.subject,
-    "run number" : user_choice.run_num}
+    "run number" : user_choice.run_num,
+    "PS" : user_choice.parallel,
+    "NS" : user_choice.no_surr,
+    "OS" : user_choice.orthogonal
+    }
 
 initials = user_choice.subject
 run_num = user_choice.run_num
 number_of_blocks = user_choice.block_num
+
+# REMOVE:
+PSV_start_cont = user_params["PS"]
+PSH_start_cont = user_params["PS"]
+NSV_start_cont = user_params["NS"]
+NSH_start_cont = user_params["NS"]
+OSV_start_cont = user_params["OS"]
+OSH_start_cont = user_params["OS"]
+
+
+start_contrasts = {'PSV': PSV_start_cont, 'PSH': PSH_start_cont, 'NSV': PSV_start_cont, 'NSH': PSH_start_cont, 
+    'OSV': PSV_start_cont, 'OSH': PSH_start_cont}
 
 current_dir = os.path.dirname(os.path.realpath((__file__)))
 subject_folder = current_dir+ '/data/' + initials
@@ -68,6 +84,7 @@ gui_on = False;
 intro_ON =  True;
 
 hold_last_contrasts = {}
+
 
 
 """ Before we open the PsychoPy window, run Eyelink Calibration"""
@@ -225,6 +242,14 @@ for block in run_list:
     # Liz Comment: Hypridizing OSSS experiment to work with Eyetracker, so first we'll set up params:
 #Initialize params from file:
     params = Params()
+    if int(block[-1]) == 1 and int(run_num) == 1:
+        # Want to get starting contrasts from previously calculated thresholds
+
+        if start_contrasts[block[:3]] != '':
+            params.start_target_contrastA = int(start_contrasts[block[:3]])
+            params.start_target_orthog_contrastA = int(start_contrasts[block[:3]])
+        # make dictionary: start_contrasts[block[:3]]
+        
     if block_num != 1 and int(block[-1]) != 1:
         params.start_target_contrastA = hold_last_contrasts[block[:3]]
         params.start_target_orthog_contrastA = hold_last_contrasts[block[:3]]
