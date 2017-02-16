@@ -171,7 +171,7 @@ def plot_eyetrack(dir_name, subject, date, all_runs):
     plt.gca().invert_yaxis()
     plt.title(subject+' Eyetrack')
     plt.legend(labels, ncol=1, loc='upper left')
-    plt.savefig(dir_name + '/proccessed/' + subject+'_'+date +'_eye.png')
+    plt.savefig(dir_name + '/processed/' + subject+'_'+date +'_eye.png')
 
 
 def eye_track_stats(dir_name, subject, date, all_runs):
@@ -195,7 +195,7 @@ def eye_track_stats(dir_name, subject, date, all_runs):
 
 def plot_psychophysical_performance(subject, date, dir_name, num_blocks):
 
-    output = open(dir_name + '/proccessed/' + subject+'_'+date+'.txt', 'a') # Save Thresholds into a .txt file
+    output = open(dir_name + '/processed/' + subject+'_'+date+'.txt', 'a') # Save Thresholds into a .txt file
     fig, axs = plt.subplots(2,3, sharex=True, sharey=True)
     rm_fig, rm_axs = plt.subplots(2,3, sharex=True, sharey=True)
     fig_result, axs_result = plt.subplots(2, 3, sharex=True, sharey=True)
@@ -206,7 +206,7 @@ def plot_psychophysical_performance(subject, date, dir_name, num_blocks):
     axs_cont = axs_cont.ravel()
     
     df_psy = pd.DataFrame([], columns = ['condition','surround_contrast', 'surround', 'annulus', 'threshold_est'])
-    EyeData = pd.ExcelFile(dir_name+'/proccessed/'+subject+'_'+dir_name[-8:]+'_master_file.xlsx')
+    EyeData = pd.ExcelFile(dir_name+'/processed/'+subject+'_'+dir_name[-8:]+'_master_file.xlsx')
     
 
     for fn in os.listdir(dir_name):
@@ -507,7 +507,7 @@ def plot_psychophysical_performance(subject, date, dir_name, num_blocks):
     fig.text(0.5, 0.04, 'Target contrast - annulus contrast', ha='center')
     fig.text(0.04, 0.5, 'Percentage correct', va='center', rotation='vertical')
     fig.set_size_inches(12.5, 9.5)
-    fig.savefig('%s.png'%(dir_name + '/proccessed/' + subject+'_'+date+ 'threshold_fit'))
+    fig.savefig('%s.png'%(dir_name + '/processed/' + subject+'_'+date+ 'threshold_fit'))
     fig.show()
     
         #fig.xlabel('Target contrast - annulus contrast')
@@ -515,18 +515,18 @@ def plot_psychophysical_performance(subject, date, dir_name, num_blocks):
     rm_fig.text(0.5, 0.04, 'Target contrast - annulus contrast', ha='center')
     rm_fig.text(0.04, 0.5, 'Percentage correct', va='center', rotation='vertical')
     rm_fig.set_size_inches(12.5, 9.5)
-    rm_fig.savefig('%s.png'%(dir_name + '/proccessed/' + subject+'_'+date+ 'removed_threshold_fit'))
+    rm_fig.savefig('%s.png'%(dir_name + '/processed/' + subject+'_'+date+ 'removed_threshold_fit'))
     rm_fig.show()
 
     fig_result.text(0.5, 0.04, 'trial number', ha='center')
     fig_result.text(0.04, 0.5, '1: Correct; 0: Incorrect', va='center', rotation='vertical')
-    fig_result.savefig(dir_name + '/proccessed/' + subject+'_'+date+'_trial_history.png')
+    fig_result.savefig(dir_name + '/processed/' + subject+'_'+date+'_trial_history.png')
     fig_result.set_size_inches(12.5, 9.5)
     fig_result.show()
 
     fig_cont.text(0.5, 0.04, 'trial number', ha='center')
     fig_cont.text(0.04, 0.5, 'Decrement Contrast', va='center', rotation='vertical')
-    fig_cont.savefig(dir_name + '/proccessed/' + subject+'_'+date +'_contrast_trial_history.png')
+    fig_cont.savefig(dir_name + '/processed/' + subject+'_'+date +'_contrast_trial_history.png')
     fig_cont.set_size_inches(12.5, 9.5)
     fig_cont.show()
 
@@ -558,9 +558,9 @@ if __name__ =="__main__":
     slope = 3.5
     
     plot_psychophysical_performance(current_subject, date, sub_folder, num_blocks)
-    all_runs = sub_folder+'/proccessed/'+current_subject+'_'+date+'_master_file.xlsx'
-    eye_track_stats(sub_folder+'/proccessed', current_subject, date, all_runs)
-    #plot_eyetrack('/'+sub_folder+'/proccessed', current_subject, date, all_runs)
+    all_runs = sub_folder+'/processed/'+current_subject+'_'+date+'_master_file.xlsx'
+    eye_track_stats(sub_folder+'/processed', current_subject, date, all_runs)
+    #plot_eyetrack('/'+sub_folder+'/processed', current_subject, date, all_runs)
     
     print('end all!')
    
