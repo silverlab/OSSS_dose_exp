@@ -7,12 +7,19 @@ import numpy as np
 import tkFileDialog
 
 directory = tkFileDialog.askdirectory()
+strings = ["CALIB", "calib", "INTRO"]
 
+if not os.path.exists(os.path.dirname(sub_folder + '/calib/')):
+    print('making directory')
+    os.makedirs(os.path.dirname(sub_folder + '/calib/'))
 
 for fn in os.listdir(directory): # we want to loop through all the files in the folder
     print fn
-
-    if fn.endswith('.asc'):
+    if any(s in fn for s in strings):  # check for calibration files, and move them to a "calib" folder
+        if fn.endswith('.asc') or fn.endswith('.EDF') or fn.endswith('.csv'):
+            os.rename(directory + '/' + fn, directory + '/calib/' + fn)
+            # print fn
+    elif fn.endswith('.asc'):
         print(fn)
         filename = fn
 

@@ -41,10 +41,10 @@ if __name__ == "__main__":
         #print("{} is not a valid directory!".format(sub_folder))
         sys.exit()
 
-    if not os.path.exists(os.path.dirname(sub_folder + '/proccessed/')):
+    if not os.path.exists(os.path.dirname(sub_folder + '/processed/')):
         #print('making directory')
-        os.makedirs(os.path.dirname(sub_folder + '/proccessed/'))
-    dataFrameSaved = pd.ExcelWriter(sub_folder + '/proccessed/' + current_subject +
+        os.makedirs(os.path.dirname(sub_folder + '/processed/'))
+    dataFrameSaved = pd.ExcelWriter(sub_folder + '/processed/' + current_subject +
                                     '_' + date + '_session' + session + '_master_file.xlsx', engine='xlsxwriter')
 
     for fn in os.listdir(sub_folder):

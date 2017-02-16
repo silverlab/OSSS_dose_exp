@@ -459,7 +459,6 @@ if __name__ == "__main__":
         sys.exit()
 
     #current_subject = subject_name.input
-    date = "12312017"
     num_blocks = 4
 
     # Global-ish Variables

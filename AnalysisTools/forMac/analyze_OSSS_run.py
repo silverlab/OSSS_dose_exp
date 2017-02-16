@@ -11,6 +11,8 @@ import seaborn as sns
 from scipy.optimize import leastsq
 import ast
 
+
+
 # class Get_initials(tk.Tk):
 #     def __init__(self):
 #         tk.Tk.__init__(self)
@@ -143,11 +145,9 @@ def correct_gaze():
 # doesn't finish this function plots raw ET data showing inner and outer
 # annulus
 def plot_eyetrack(dir_name, subject, date, all_runs):
-    outputBadTrials = open(dir_name + '/processed/' + subject + '_' + date + '_session' +
-                           session + '_BadTrials.csv', 'a+')  # Save proportion of bad data into csv file
+    outputBadTrials = open(dir_name + '/processed/' + subject + '_' + date + '_session' + session + '_BadTrials.csv', 'a+')  # Save proportion of bad data into csv file
     outputBadTrialsCsv = csv.writer(outputBadTrials)
-    outputBadTrialsCsv.writerow(["SID", "Condition", "Total # samples", "Discarded Samples (stim off)",
-                                 "Stim on & no blink", "Bad Fixation Samples", "Proportion Bad Fixation Samples"])
+    outputBadTrialsCsv.writerow(["SID", "Condition", "Total # samples", "Discarded Samples (stim off)","Stim on & no blink", "Bad Fixation Samples", "Proportion Bad Fixation Samples"])
     # load up some figures
     fig_all, ax_all = plt.subplots()
     subject_data = pd.ExcelFile(all_runs)
@@ -187,8 +187,7 @@ def plot_eyetrack(dir_name, subject, date, all_runs):
         outsideFix = len(df_data.time[df_data.Out_Bounds_stim_On == 1])
         # proportion of time NOT fixating properly
         pTimeBad = outsideFix / len(df_stim_on)
-        outputBadTrialsCsv.writerow(
-            [subject, sheet, total, samplesDiscarded, len(df_stim_on), outsideFix, pTimeBad])
+        outputBadTrialsCsv.writerow([subject, sheet, total, samplesDiscarded, len(df_stim_on), outsideFix, pTimeBad])
 
     # ax_all
 #     plt.xlim([0, 1150])
@@ -206,13 +205,12 @@ def plot_eyetrack(dir_name, subject, date, all_runs):
     plt.gca().invert_yaxis()
     plt.title(subject + ' Eyetrack')
     plt.legend(labels, ncol=1, loc='upper left')
-    plt.savefig(dir_name + '/proccessed/' + subject + '_' +
+    plt.savefig(dir_name + '/processed/' + subject + '_' +
                 date + '_session' + session + '_eyePosition.png')
 
 
 def plot_psychophysical_performance(subject, date, dir_name, num_blocks):
-    output = open(dir_name + '/proccessed/' + subject + '_' + date + '_session' +
-                  session + '_ContrastThresholds.txt', 'a')  # Save Thresholds into a .txt file
+    output = open(dir_name + '/processed/' + subject + '_' + date + '_session' + session + '_ContrastThresholds.txt', 'a')  # Save Thresholds into a .txt file
     fig, axs = plt.subplots(2, 3, sharex=True, sharey=True)
     rm_fig, rm_axs = plt.subplots(2, 3, sharex=True, sharey=True)
     fig_result, axs_result = plt.subplots(2, 3, sharex=True, sharey=True)
@@ -224,7 +222,7 @@ def plot_psychophysical_performance(subject, date, dir_name, num_blocks):
 
     df_psy = pd.DataFrame([], columns=[
                           'condition', 'surround_contrast', 'surround', 'annulus', 'threshold_est'])
-    EyeData = pd.ExcelFile(dir_name + '/proccessed/' + subject +
+    EyeData = pd.ExcelFile(dir_name + '/processed/' + subject +
                            '_' + date + '_session' + session + '_master_file.xlsx')
 
     for fn in os.listdir(dir_name):
@@ -557,7 +555,7 @@ def plot_psychophysical_performance(subject, date, dir_name, num_blocks):
     fig.text(0.5, 0.04, 'Target contrast - annulus contrast', ha='center')
     fig.text(0.04, 0.5, 'Percentage correct', va='center', rotation='vertical')
     fig.set_size_inches(12.5, 9.5)
-    fig.savefig('%s.png' % (dir_name + '/proccessed/' + subject +
+    fig.savefig('%s.png' % (dir_name + '/processed/' + subject +
                             '_' + date + '_session' + session + '_FittedThresholdsWeibull'))
     fig.show()
 
@@ -567,13 +565,13 @@ def plot_psychophysical_performance(subject, date, dir_name, num_blocks):
     rm_fig.text(0.04, 0.5, 'Percentage correct',
                 va='center', rotation='vertical')
     rm_fig.set_size_inches(12.5, 9.5)
-    rm_fig.savefig('%s.png' % (dir_name + '/proccessed/' + subject + '_' +
+    rm_fig.savefig('%s.png' % (dir_name + '/processed/' + subject + '_' +
                                date + '_session' + session + '_RemovedFittedThresholdWeibull'))
     rm_fig.show()
 
     fig_result.text(0.5, 0.04, 'Correct or Incorrect', ha='center')
     fig_result.text(0.04, 0.5, 'Proportion', va='center', rotation='vertical')
-    fig_result.savefig(dir_name + '/proccessed/' + subject + '_' +
+    fig_result.savefig(dir_name + '/processed/' + subject + '_' +
                        date + '_session' + session + '_BehavioralPerformance.png')
     fig_result.set_size_inches(12.5, 9.5)
     fig_result.show()
@@ -581,7 +579,7 @@ def plot_psychophysical_performance(subject, date, dir_name, num_blocks):
     fig_cont.text(0.5, 0.04, 'trial number', ha='center')  # figure handle
     fig_cont.text(0.04, 0.5, 'Target Contrast',
                   va='center', rotation='vertical')
-    fig_cont.savefig(dir_name + '/proccessed/' + subject +
+    fig_cont.savefig(dir_name + '/processed/' + subject +
                      '_' + date + '_session' + session + '_TargetContrast.png')
     fig_cont.set_size_inches(12.5, 9.5)
     fig_cont.show()
@@ -616,7 +614,7 @@ if __name__ == "__main__":
     slope = 3.5
     plot_psychophysical_performance(
         current_subject, date, sub_folder, num_blocks)  # only uses this function
-    all_runs = sub_folder + '/proccessed/' + current_subject + \
+    all_runs = sub_folder + '/processed/' + current_subject + \
         '_' + date + '_session' + session + '_master_file.xlsx'
 
     #plot_eyetrack('/'+sub_folder+'/proccessed', current_subject, date, all_runs)
